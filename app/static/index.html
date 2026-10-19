@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReguChain AI</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,sans-serif;color:#e9eef9;background:#0b1020}
+*{box-sizing:border-box}body{margin:0}header{padding:26px max(22px,calc((100vw - 1100px)/2));border-bottom:1px solid #28324b;background:#10182b}
+.brand{font-size:24px;font-weight:800;letter-spacing:-.5px}.brand span{color:#59d6bd}.sub{color:#9aa8c3;margin-top:7px}
+main{max-width:1100px;margin:26px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap}
+h1{font-size:clamp(27px,4vw,40px);margin:8px 0}.muted{color:#9aa8c3;line-height:1.55}.pill{border:1px solid #315b62;color:#7fe5d1;border-radius:999px;padding:7px 12px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;margin-top:24px}
+.card{background:#111a2d;border:1px solid #26334c;border-radius:16px;padding:20px;min-width:0}.card h2{font-size:17px;margin:0 0 14px}
+label{display:block;font-size:13px;color:#b8c4da;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #34425e;background:#0b1324;color:#f3f6fc;border-radius:9px;padding:11px;font:inherit}textarea{min-height:75px;resize:vertical}
+button{background:#58d5bd;color:#07151b;font-weight:800;border:0;border-radius:9px;padding:11px 14px;margin-top:14px;cursor:pointer}button.secondary{background:#253651;color:#e9eef9}
+.output{white-space:pre-wrap;overflow-wrap:anywhere;background:#08101e;border:1px solid #26334c;border-radius:10px;padding:13px;font-size:12px;max-height:350px;overflow:auto;margin-top:12px;display:none}
+.status{font-size:12px;color:#a8bad8;margin-top:10px}.wide{grid-column:1/-1}.tiny{font-size:12px;color:#91a1bc}
+</style></head>
+<body>
+<header><div class="brand">🛡️ ReguChain <span>AI</span></div><div class="sub">Regulatory intelligence · Incident reporting · Evidence integrity</div></header>
+<main>
+<div class="hero"><div><div class="pill">HACKATHON MVP · DEMO MODE</div><h1>From breach to report.<br>With verifiable evidence.</h1><div class="muted">Create a simulated incident, research official regulatory sources, draft a report, and verify evidence hashes.</div></div><div class="pill" id="health">Checking API…</div></div>
+<div class="grid">
+<section class="card"><h2>01 / Incident intake</h2>
+<label>Incident title</label><input id="title" value="Suspected customer data exposure">
+<label>Incident type</label><select id="type"><option>Suspected data breach</option><option>Ransomware</option><option>Unauthorized access</option><option>Service disruption</option></select>
+<label>Detected at</label><input id="detected" type="datetime-local">
+<label>Affected systems (comma-separated)</label><input id="systems" value="billing-test-01">
+<label>Known impact</label><textarea id="impact" placeholder="Describe what is confirmed; use Unknown if still investigating."></textarea>
+<label>Containment actions</label><textarea id="containment" placeholder="e.g. Isolated test host; investigation ongoing"></textarea>
+<button onclick="createIncident()">Assess incident</button><button class="secondary" onclick="draftReport()">Generate report draft</button>
+<div id="incidentOut" class="output"></div></section>
+<section class="card"><h2>02 / TinyFish regulatory intelligence</h2>
+<div class="muted">Search the official CERT-In domain for relevant regulatory guidance. Add your TinyFish API key to the backend .env file first.</div>
+<label>Research query</label><input id="query" value="CERT-In cyber incident reporting directions six hours FAQ">
+<button onclick="searchRegulations()">Search with TinyFish</button><div id="searchOut" class="output"></div>
+<div class="tiny">Source links are evidence for review, not an automatic legal determination.</div></section>
+<section class="card"><h2>03 / Evidence integrity</h2>
+<div class="muted">Create a SHA-256 digest for a file, then verify the same file or a modified copy against that digest.</div>
+<label>Evidence file</label><input type="file" id="evidence">
+<button onclick="hashEvidence()">Hash evidence</button>
+<label>Expected SHA-256 digest</label><input id="expected" placeholder="Paste the digest returned above">
+<button class="secondary" onclick="verifyEvidence()">Verify evidence</button><div id="hashOut" class="output"></div></section>
+<section class="card"><h2>04 / What this demo proves</h2>
+<ul class="muted"><li>Incident completeness checks</li><li>TinyFish source discovery when configured</li><li>Structured report drafting</li><li>Reproducible SHA-256 file integrity checks</li></ul>
+<p class="tiny">Blockchain anchoring is the next milestone. This starter does not claim a hash is already on-chain or that a report has been submitted to a regulator.</p></section>
+</div>
+<p class="tiny" style="margin:24px 0">Demo only. Do not upload real breach data. Deadline calculation is illustrative and must be checked against applicable law and the correct trigger.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+async function call(url,opts={}){const r=await fetch(url,opts);const d=await r.json();if(!r.ok)throw new Error(d.detail||JSON.stringify(d));return d}
+function show(id,data){const el=$(id);el.style.display='block';el.textContent=typeof data==='string'?data:JSON.stringify(data,null,2)}
+function incident(){return {title:$('title').value,incident_type:$('type').value,detected_at:new Date($('detected').value).toISOString(),organization:'Demo Organization',affected_systems:$('systems').value.split(',').map(x=>x.trim()).filter(Boolean),known_impact:$('impact').value,containment_actions:$('containment').value,jurisdiction:'India'}}
+async function createIncident(){try{show('incidentOut',await call('/api/incident',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(incident())}))}catch(e){show('incidentOut','Error: '+e.message)}}
+async function draftReport(){try{const d=await call('/api/report-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({incident:incident()})});show('incidentOut',d.draft_markdown+'\n\nMissing fields: '+(d.missing_fields.join(', ')||'None'))}catch(e){show('incidentOut','Error: '+e.message)}}
+async function searchRegulations(){show('searchOut','Searching official sources…');try{show('searchOut',await call('/api/regulatory-search?query='+encodeURIComponent($('query').value),{method:'POST'}))}catch(e){show('searchOut','Error: '+e.message)}}
+async function hashEvidence(){const f=$('evidence').files[0];if(!f)return show('hashOut','Choose a file first.');const fd=new FormData();fd.append('file',f);try{const d=await call('/api/evidence/hash',{method:'POST',body:fd});$('expected').value=d.sha256;show('hashOut',d)}catch(e){show('hashOut','Error: '+e.message)}}
+async function verifyEvidence(){const f=$('evidence').files[0];if(!f)return show('hashOut','Choose a file first.');const fd=new FormData();fd.append('file',f);try{show('hashOut',await call('/api/evidence/verify?expected_sha256='+encodeURIComponent($('expected').value),{method:'POST',body:fd}))}catch(e){show('hashOut','Error: '+e.message)}}
+$('detected').value=new Date(Date.now()-15*60000).toISOString().slice(0,16);
+call('/api/health').then(d=>$('health').textContent=d.tinyfish_configured?'API online · TinyFish configured':'API online · TinyFish key needed').catch(()=>$('health').textContent='Start backend to connect');
+</script></body></html>

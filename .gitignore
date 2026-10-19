@@ -1,0 +1,18 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+uploads/
+# Generated incident reports and audit logs
+reports/
+
+# Environment and local secrets
+.env.*
+!.env.example
+
+# Python and test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
